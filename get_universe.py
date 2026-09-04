@@ -31,16 +31,35 @@ def get_sp500_tickers() -> list:
 def get_nasdaq100_tickers() -> list:
     url = "https://en.wikipedia.org/wiki/Nasdaq-100"
     tables = _read_html_tables(url)
-    # the constituents table is usually the one with a 'Ticker' or 'Symbol' column
+
+    candidates = []
     for t in tables:
-        cols = [c.lower() for c in t.columns.astype(str)]
-        if "ticker" in cols:
-            col = t.columns[cols.index("ticker")]
-            return t[col].str.replace(".", "-", regex=False).tolist()
-        if "symbol" in cols:
-            col = t.columns[cols.index("symbol")]
-            return t[col].str.replace(".", "-", regex=False).tolist()
-    raise ValueError("Could not find ticker column in Nasdaq-100 Wikipedia tables")
+        # flatten MultiIndex columns (Wikipedia tables sometimes have these) to plain strings
+        cols = [
+            " ".join(str(x) for x in c).strip() if isinstance(c, tuple) else str(c)
+            for c in t.columns
+        ]
+        cols_lower = [c.lower() for c in cols]
+
+        match_col = None
+        for i, c in enumerate(cols_lower):
+            if "ticker" in c or c.strip() == "symbol" or "symbol" in c:
+                match_col = t.columns[i]
+                break
+
+        if match_col is not None:
+            candidates.append((t, match_col))
+
+    if not candidates:
+        raise ValueError("Could not find ticker column in Nasdaq-100 Wikipedia tables")
+
+    # prefer the table whose row count looks like the actual 100-ish constituent list
+    candidates.sort(key=lambda tc: abs(len(tc[0]) - 101))
+    best_table, best_col = candidates[0]
+
+    tickers = best_table[best_col].astype(str).str.strip()
+    tickers = tickers[tickers.str.match(r"^[A-Za-z.\-]{1,6}$")]  # drop stray non-ticker rows
+    return tickers.str.replace(".", "-", regex=False).tolist()
 
 
 def get_universe() -> list:
