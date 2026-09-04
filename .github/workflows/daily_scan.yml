@@ -1,4 +1,4 @@
-name: Daily Watchlist Scan
+name: Daily Full Universe Scan (S&P500 + Nasdaq100)
 
 on:
   schedule:
@@ -10,6 +10,7 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 30   # 전체 유니버스 스캔은 시간이 좀 걸리므로 여유 있게 설정
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -20,12 +21,12 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install anthropic requests pandas numpy yfinance
+        run: pip install anthropic requests pandas numpy yfinance lxml
 
-      - name: Run scan and send email
+      - name: Run full universe scan and send email
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-        run: python3 mail_report.py
+        run: python3 batch_scan.py
