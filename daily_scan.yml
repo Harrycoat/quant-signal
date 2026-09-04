@@ -1,0 +1,31 @@
+name: Daily Watchlist Scan
+
+on:
+  schedule:
+    # 13:00 UTC = 미국 동부 09:00 (장 시작 30분 전, 서머타임 기준)
+    # 필요하면 시간 조정하세요 (UTC 기준으로 작성해야 함)
+    - cron: "0 13 * * 1-5"   # 월~금만 실행
+  workflow_dispatch:          # "Run workflow" 버튼으로 수동 실행도 가능
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install anthropic requests pandas numpy yfinance
+
+      - name: Run scan and send email
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python3 mail_report.py
