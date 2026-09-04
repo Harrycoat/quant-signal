@@ -29,37 +29,27 @@ def get_sp500_tickers() -> list:
 
 
 def get_nasdaq100_tickers() -> list:
-    url = "https://en.wikipedia.org/wiki/Nasdaq-100"
-    tables = _read_html_tables(url)
-
-    candidates = []
-    for t in tables:
-        # flatten MultiIndex columns (Wikipedia tables sometimes have these) to plain strings
-        cols = [
-            " ".join(str(x) for x in c).strip() if isinstance(c, tuple) else str(c)
-            for c in t.columns
-        ]
-        cols_lower = [c.lower() for c in cols]
-
-        match_col = None
-        for i, c in enumerate(cols_lower):
-            if "ticker" in c or c.strip() == "symbol" or "symbol" in c:
-                match_col = t.columns[i]
-                break
-
-        if match_col is not None:
-            candidates.append((t, match_col))
-
-    if not candidates:
-        raise ValueError("Could not find ticker column in Nasdaq-100 Wikipedia tables")
-
-    # prefer the table whose row count looks like the actual 100-ish constituent list
-    candidates.sort(key=lambda tc: abs(len(tc[0]) - 101))
-    best_table, best_col = candidates[0]
-
-    tickers = best_table[best_col].astype(str).str.strip()
-    tickers = tickers[tickers.str.match(r"^[A-Za-z.\-]{1,6}$")]  # drop stray non-ticker rows
-    return tickers.str.replace(".", "-", regex=False).tolist()
+    """
+    Nasdaq-100 constituents as a static list (as of Sep 2026).
+    Wikipedia's Nasdaq-100 page doesn't reliably expose a parseable
+    constituents table (structure changes / table gets dropped), so a
+    static list refreshed a few times a year is far more reliable for
+    a daily automated job than scraping. Update this list when Nasdaq
+    does its annual December reconstitution, or if you notice a new
+    addition (e.g. from financial news) missing here.
+    """
+    return [
+        "NVDA", "AAPL", "GOOGL", "GOOG", "MSFT", "MU", "AMZN", "AMD", "TSLA", "META",
+        "AVGO", "WMT", "INTC", "CSCO", "PLTR", "COST", "LRCX", "NFLX", "AMAT", "PANW",
+        "AMGN", "SNDK", "TXN", "KLAC", "LIN", "CRWD", "TMUS", "PEP", "GILD", "MRVL",
+        "STX", "SHOP", "QCOM", "ADI", "ASML", "WDC", "BKNG", "VRTX", "ISRG", "SBUX",
+        "ADBE", "FTNT", "ADP", "ARM", "CEG", "MELI", "APP", "CMCSA", "INTU", "DASH",
+        "CSX", "MAR", "REGN", "CDNS", "CTAS", "SNPS", "MDLZ", "ABNB", "ROST", "ORLY",
+        "DDOG", "WBD", "AEP", "LITE", "HON", "PCAR", "BKR", "MPWR", "NXPI", "FANG",
+        "FAST", "TER", "PYPL", "ADSK", "CCEP", "ALAB", "MSTR", "XEL", "NBIS", "EXC",
+        "PAYX", "AXON", "KDP", "MNST", "ROP", "TRI", "IDXX", "WDAY", "TTWO", "MCHP",
+        "ODFL", "CRWV", "RKLB", "ALNY", "DXCM", "GEHC", "CPRT", "KHC", "EA", "PDD",
+    ]
 
 
 def get_universe() -> list:
