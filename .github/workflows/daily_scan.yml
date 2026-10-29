@@ -1,10 +1,7 @@
 name: Daily Full Universe Scan (S&P500 + Nasdaq100)
 
 on:
-  schedule:
-    # 13:00 UTC = 미국 동부 09:00 (장 시작 30분 전, 서머타임 기준)
-    # 필요하면 시간 조정하세요 (UTC 기준으로 작성해야 함)
-    - cron: "0 13 * * 1-5"   # 월~금만 실행
+  # 자동 스케줄 꺼짐 (2026-10-29 Harry 지시) — 수동 실행만 가능
   workflow_dispatch:          # "Run workflow" 버튼으로 수동 실행도 가능
 
 jobs:
